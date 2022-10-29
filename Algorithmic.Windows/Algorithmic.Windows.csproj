@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Securities</AssemblyName>
+    <RootNamespace>ShareInvest</RootNamespace>
+    <ApplicationIcon>bird_away.ico</ApplicationIcon>
+    <Authors>cyberprophet</Authors>
+    <Company>ShareInvest</Company>
+    <Product>Algorithmic Trading</Product>
+    <Copyright>Copyright ⓒ 2022, ShareInvest Corp.</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="bird_away.ico" />
+  </ItemGroup>
+
+</Project>
