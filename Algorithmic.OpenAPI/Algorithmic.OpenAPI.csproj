@@ -1,16 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0-windows8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>Kiwoom</AssemblyName>
-    <RootNamespace>ShareInvest</RootNamespace>
-    <Authors>cyberprophet</Authors>
-    <Company>ShareInvest</Company>
-    <Product>Algorithmic Trading</Product>
-    <Copyright>Copyright ⓒ 2022, ShareInvest</Copyright>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0-windows8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>Kiwoom</AssemblyName>
+		<RootNamespace>ShareInvest</RootNamespace>
+		<Authors>cyberprophet</Authors>
+		<Company>ShareInvest</Company>
+		<Product>Algorithmic Trading</Product>
+		<Copyright>Copyright ⓒ 2022, ShareInvest</Copyright>
+		<PlatformTarget>x86</PlatformTarget>
+	</PropertyGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Library.October.2022\Algorithmic.Library\Algorithmic.Library.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<Reference Include="AxKHOpenAPILib">
+			<HintPath>..\..\Algorithmic.Trading\AxKHOpenAPILib.dll</HintPath>
+		</Reference>
+		<Reference Include="KHOpenAPILib">
+			<HintPath>..\..\Algorithmic.Trading\KHOpenAPILib.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+	
 </Project>

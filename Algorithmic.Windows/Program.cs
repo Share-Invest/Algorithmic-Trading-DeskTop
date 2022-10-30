@@ -1,3 +1,7 @@
+using ShareInvest.Identifies;
+
+using System.Diagnostics;
+
 namespace ShareInvest
 {
     static class Program
@@ -5,8 +9,22 @@ namespace ShareInvest
         [STAThread]
         static void Main()
         {
-            ApplicationConfiguration.Initialize();
-            Application.Run(new Securities());
+            if (KeyDecoder.ProductKeyFromRegistry is string key)
+            {
+                Status.SetDebug();
+                ApplicationConfiguration.Initialize();
+                Application.Run(new Securities(new[]
+                {
+                    Properties.Resources.bird_idle,
+                    Properties.Resources.bird_awake,
+                    Properties.Resources.bird_alert,
+                    Properties.Resources.bird_sleep,
+                    Properties.Resources.bird_invisible
+                },
+                Status.GetId(key.Split('-'))));
+            }
+            GC.Collect();
+            Process.GetCurrentProcess().Kill();
         }
     }
 }
