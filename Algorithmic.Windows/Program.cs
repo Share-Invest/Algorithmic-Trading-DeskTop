@@ -1,4 +1,5 @@
 using ShareInvest.Identifies;
+using ShareInvest.Services;
 
 using System.Diagnostics;
 
@@ -21,7 +22,7 @@ namespace ShareInvest
                     Properties.Resources.bird_sleep,
                     Properties.Resources.bird_invisible
                 },
-                Status.GetId(key.Split('-'))));
+                new SecuritiesService(Status.GetId(key.Split('-')))));
             }
             GC.Collect();
             Process.GetCurrentProcess().Kill();

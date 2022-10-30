@@ -109,5 +109,23 @@ namespace ShareInvest.Properties {
                 return ((System.Drawing.Icon)(obj));
             }
         }
+        
+        /// <summary>
+        ///   http://shareinvest.net과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        internal static string URL {
+            get {
+                return ResourceManager.GetString("URL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   It can be fatal to data when manually terminated.\n\nDo you really want to end it?과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        internal static string WARNING {
+            get {
+                return ResourceManager.GetString("WARNING", resourceCulture);
+            }
+        }
     }
 }

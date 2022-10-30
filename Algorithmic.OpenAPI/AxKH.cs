@@ -1,20 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using ShareInvest.Mappers;
+using ShareInvest.Models.OpenAPI;
 
 namespace ShareInvest
 {
-    public partial class AxKH : UserControl
+    public partial class AxKH : UserControl,
+                                ISecuritiesMapper<MessageEventArgs>
     {
-        public AxKH()
+        public event EventHandler<MessageEventArgs>? Send;
+
+        public AxKH(string id)
         {
+            this.id = id;
             InitializeComponent();
         }
+        public bool CommConnect()
+        {
+            return axAPI.CommConnect() == 0;
+        }
+        public int ConnectState => axAPI.GetConnectState();
+
+        readonly string id;
     }
 }
