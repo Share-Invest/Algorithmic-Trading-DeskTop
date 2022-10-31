@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algorithmic.Windows", "Algorithmic.Windows\Algorithmic.Windows.csproj", "{E23AE6F8-B6E7-484B-9D11-1452949E7881}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithmic.Windows", "Algorithmic.Windows\Algorithmic.Windows.csproj", "{E23AE6F8-B6E7-484B-9D11-1452949E7881}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algorithmic.OpenAPI", "Algorithmic.OpenAPI\Algorithmic.OpenAPI.csproj", "{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithmic.OpenAPI", "Algorithmic.OpenAPI\Algorithmic.OpenAPI.csproj", "{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithmic.Library", "..\Library.October.2022\Algorithmic.Library\Algorithmic.Library.csproj", "{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
