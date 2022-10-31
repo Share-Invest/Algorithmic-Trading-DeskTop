@@ -1,18 +1,17 @@
 ﻿using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI;
 
-namespace ShareInvest.Services
+namespace ShareInvest.Services;
+
+class SecuritiesService
 {
-    class SecuritiesService
+    internal SecuritiesService(string id)
     {
-        public SecuritiesService(string id)
-        {
-            this.id = id;
-        }
-        internal ISecuritiesMapper<MessageEventArgs> GetSecurities()
-        {
-            return new AxKH(id);
-        }
-        readonly string id;
+        this.id = id;
     }
+    internal ISecuritiesMapper<AxMessageEventArgs> GetSecurities()
+    {
+        return new AxKH(id);
+    }
+    readonly string id;
 }

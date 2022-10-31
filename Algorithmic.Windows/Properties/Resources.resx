@@ -133,10 +133,13 @@
   <data name="bird_sleep" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\bird_sleep.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="OP" xml:space="preserve">
+    <value>opstarter</value>
+  </data>
   <data name="URL" xml:space="preserve">
     <value>http://shareinvest.net</value>
   </data>
   <data name="WARNING" xml:space="preserve">
-    <value>It can be fatal to data when manually terminated.\n\nDo you really want to end it?</value>
+    <value>It can be fatal to data when manually terminated.||Do you really want to end it?</value>
   </data>
 </root>

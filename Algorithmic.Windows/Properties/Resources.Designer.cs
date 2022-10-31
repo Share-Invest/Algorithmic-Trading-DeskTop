@@ -111,6 +111,15 @@ namespace ShareInvest.Properties {
         }
         
         /// <summary>
+        ///   opstarter과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        internal static string OP {
+            get {
+                return ResourceManager.GetString("OP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   http://shareinvest.net과(와) 유사한 지역화된 문자열을 찾습니다.
         /// </summary>
         internal static string URL {
@@ -120,7 +129,7 @@ namespace ShareInvest.Properties {
         }
         
         /// <summary>
-        ///   It can be fatal to data when manually terminated.\n\nDo you really want to end it?과(와) 유사한 지역화된 문자열을 찾습니다.
+        ///   It can be fatal to data when manually terminated.||Do you really want to end it?과(와) 유사한 지역화된 문자열을 찾습니다.
         /// </summary>
         internal static string WARNING {
             get {
