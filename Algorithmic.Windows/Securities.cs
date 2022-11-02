@@ -1,5 +1,5 @@
 ﻿using ShareInvest.Mappers;
-using ShareInvest.Models.OpenAPI;
+using ShareInvest.Models.OpenAPI.Observe;
 using ShareInvest.Properties;
 using ShareInvest.Services;
 
@@ -29,6 +29,7 @@ partial class Securities : Form
                 break;
         }
         var param = $"{DateTime.Now:G}\n[{e.Code}] {e.Title}({e.Screen})";
+
         notifyIcon.Text = param.Length < 0x40 ? param : $"[{e.Code}] {e.Title}({e.Screen})";
     }
     void TimerTick(object sender, EventArgs e)
@@ -36,7 +37,9 @@ partial class Securities : Form
         if (securities is null)
         {
             timer.Stop();
+
             strip.ItemClicked -= StripItemClicked;
+
             Dispose();
         }
         else if (FormBorderStyle.Equals(FormBorderStyle.Sizable) &&
@@ -72,7 +75,11 @@ partial class Securities : Form
                             IsConnected = ax.CommConnect();
 
                             if (IsConnected)
+                            {
                                 securities.Send += OnReceiveMessage;
+
+                                Delay.GetInstance(0x259).Run();
+                            }
                         }
                     }
                     catch
@@ -100,7 +107,11 @@ partial class Securities : Form
                         _ => false
                     };
                     if (IsConnected)
+                    {
                         securities.Send += OnReceiveMessage;
+
+                        Delay.GetInstance(0x259).Run();
+                    }
                 }
             }));
         else
@@ -111,10 +122,13 @@ partial class Securities : Form
         _ = BeginInvoke(new Action(() =>
         {
             SuspendLayout();
+
             Visible = false;
             ShowIcon = false;
             notifyIcon.Visible = true;
+
             ResumeLayout();
+
             Set(securities as Control);
         }));
     }
@@ -138,9 +152,12 @@ partial class Securities : Form
         if (component is Control control)
         {
             Controls.Add(control);
+
             control.Dock = DockStyle.Fill;
             control.Show();
+
             FormBorderStyle = FormBorderStyle.None;
+
             CenterToScreen();
         }
         else

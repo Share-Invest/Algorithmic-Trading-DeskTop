@@ -1,9 +1,10 @@
 ﻿using AxKHOpenAPILib;
 
 using ShareInvest.Mappers;
-using ShareInvest.Models.OpenAPI;
+using ShareInvest.Models.OpenAPI.Observe;
 
 using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 
 namespace ShareInvest;
@@ -34,7 +35,7 @@ public partial class AxKH : UserControl,
 
         return axAPI.CommConnect() == 0;
     }
-    void GetInformationOfCode(IEnumerable<string> codeListByMarket)
+    IEnumerable<Models.OpenAPI.TR> GetListOfStocks(IEnumerable<string> codeListByMarket)
     {
         int index = 0;
         var sb = new StringBuilder(0x100);
@@ -46,6 +47,7 @@ public partial class AxKH : UserControl,
                 if (index++ % 0x63 == 0x62)
                 {
                     codeStack.Push(sb.Append(code));
+
                     sb = new StringBuilder();
                 }
                 sb.Append(code).Append(';');
@@ -55,17 +57,23 @@ public partial class AxKH : UserControl,
         while (codeStack.TryPop(out StringBuilder? pop))
             if (pop is not null && pop.Length > 5)
             {
+                var listOfStocks = pop.ToString();
 
-
-                if (Status.IsDebugging)
-                    Debug.WriteLine(pop);
+                yield return new Models.OpenAPI.Request.OPTKWFID
+                {
+                    Value = new[]
+                    {
+                        listOfStocks
+                    },
+                    PrevNext = listOfStocks.Split(';').Length
+                };
             }
     }
-    void OnReceiveErrorMessage(int error, string? sRQName)
+    void OnReceiveErrorMessage(string? sRQName, int error)
     {
         if (error < 0)
             Send?.Invoke(this,
-                         new AxMessageEventArgs(Status.Error[error],
+            new AxMessageEventArgs(Status.Error[error],
                                                 sRQName,
                                                 Math.Abs(error).ToString("D4")));
     }
@@ -90,10 +98,48 @@ public partial class AxKH : UserControl,
                                            .Split(';')
                                            .OrderBy(o => Guid.NewGuid()));
 
-            GetInformationOfCode(codeListByMarket);
+            foreach (var tr in GetListOfStocks(codeListByMarket))
+            {
+                var nCodeCount = tr.PrevNext;
+                tr.PrevNext = 0;
+
+                if (tr.Value is not null)
+                    Delay.GetInstance(0x259)
+                         .RequestTheMission(new Task(() =>
+                         {
+                             OnReceiveErrorMessage(tr.RQName,
+                                                   axAPI.CommKwRqData(tr.Value[0],
+                                                                      tr.PrevNext,
+                                                                      nCodeCount,
+                                                                      0,
+                                                                      tr.RQName,
+                                                                      tr.ScreenNo));
+                         }));
+            }
         }
         else
-            OnReceiveErrorMessage(e.nErrCode, sender.GetType().Name);
+            OnReceiveErrorMessage(sender.GetType().Name, e.nErrCode);
+    }
+    void OnReceiveTrData(object sender, _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
+    {
+        var name = string.Concat(typeof(TR).FullName, '.', e.sTrCode);
+
+        if (Assembly.GetExecutingAssembly()
+                    .CreateInstance(name, true) is TR ctor)
+        {
+            var request = string.Concat(typeof(Models.OpenAPI.TR).Namespace,
+                                        '.',
+                                        nameof(Models.OpenAPI.Request),
+                                        '.',
+                                        e.sTrCode);
+
+            foreach (var json in ctor.OnReceiveTrData(axAPI, e,
+                                                      Assembly.GetExecutingAssembly()
+                                                              .CreateInstance(request, true) as Models.OpenAPI.TR))
+            {
+                Debug.WriteLine(json);
+            }
+        }
     }
     void OnReceiveTrCondition(object sender, _DKHOpenAPIEvents_OnReceiveTrConditionEvent e)
     {
@@ -104,10 +150,6 @@ public partial class AxKH : UserControl,
         throw new NotImplementedException();
     }
     void OnReceiveConditionVersion(object sender, _DKHOpenAPIEvents_OnReceiveConditionVerEvent e)
-    {
-        throw new NotImplementedException();
-    }
-    void OnReceiveTrData(object sender, _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
     {
         throw new NotImplementedException();
     }
