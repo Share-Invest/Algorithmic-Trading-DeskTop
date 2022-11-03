@@ -1,4 +1,5 @@
-﻿using ShareInvest.Mappers;
+﻿using ShareInvest.Infrastructure.Http;
+using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI.Observe;
 
 namespace ShareInvest.Services;
@@ -11,7 +12,9 @@ class SecuritiesService
     }
     internal ISecuritiesMapper<AxMessageEventArgs> GetSecurities()
     {
-        return new AxKH(id);
+        var api = new CoreRestClient();
+
+        return new AxKH(api, id);
     }
     readonly string id;
 }

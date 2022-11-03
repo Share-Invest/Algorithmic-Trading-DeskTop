@@ -1,11 +1,11 @@
 ﻿using AxKHOpenAPILib;
 
+using ShareInvest.Infrastructure.Http;
 using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI.Observe;
+using ShareInvest.Models.OpenAPI.Request;
 
-using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 
 namespace ShareInvest;
 
@@ -16,9 +16,10 @@ public partial class AxKH : UserControl,
 
     public int ConnectState => axAPI.GetConnectState();
 
-    public AxKH(string id)
+    public AxKH(CoreRestClient api, string id)
     {
         this.id = id;
+        this.api = api;
 
         InitializeComponent();
     }
@@ -34,40 +35,6 @@ public partial class AxKH : UserControl,
         axAPI.OnReceiveTrCondition += OnReceiveTrCondition;
 
         return axAPI.CommConnect() == 0;
-    }
-    IEnumerable<Models.OpenAPI.TR> GetListOfStocks(IEnumerable<string> codeListByMarket)
-    {
-        int index = 0;
-        var sb = new StringBuilder(0x100);
-        var codeStack = new Stack<StringBuilder>(0x10);
-
-        foreach (var code in codeListByMarket)
-            if (string.IsNullOrEmpty(code) is false)
-            {
-                if (index++ % 0x63 == 0x62)
-                {
-                    codeStack.Push(sb.Append(code));
-
-                    sb = new StringBuilder();
-                }
-                sb.Append(code).Append(';');
-            }
-        codeStack.Push(sb.Remove(sb.Length - 1, 1));
-
-        while (codeStack.TryPop(out StringBuilder? pop))
-            if (pop is not null && pop.Length > 5)
-            {
-                var listOfStocks = pop.ToString();
-
-                yield return new Models.OpenAPI.Request.OPTKWFID
-                {
-                    Value = new[]
-                    {
-                        listOfStocks
-                    },
-                    PrevNext = listOfStocks.Split(';').Length
-                };
-            }
     }
     void OnReceiveErrorMessage(string? sRQName, int error)
     {
@@ -98,7 +65,7 @@ public partial class AxKH : UserControl,
                                            .Split(';')
                                            .OrderBy(o => Guid.NewGuid()));
 
-            foreach (var tr in GetListOfStocks(codeListByMarket))
+            foreach (var tr in Tr.OPTKWFID.GetListOfStocks(codeListByMarket))
             {
                 var nCodeCount = tr.PrevNext;
                 tr.PrevNext = 0;
@@ -120,26 +87,21 @@ public partial class AxKH : UserControl,
         else
             OnReceiveErrorMessage(sender.GetType().Name, e.nErrCode);
     }
-    void OnReceiveTrData(object sender, _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
+    void OnReceiveTrData(object sender,
+                               _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
     {
         var name = string.Concat(typeof(TR).FullName, '.', e.sTrCode);
 
         if (Assembly.GetExecutingAssembly()
                     .CreateInstance(name, true) is TR ctor)
-        {
-            var request = string.Concat(typeof(Models.OpenAPI.TR).Namespace,
-                                        '.',
-                                        nameof(Models.OpenAPI.Request),
-                                        '.',
-                                        e.sTrCode);
 
-            foreach (var json in ctor.OnReceiveTrData(axAPI, e,
-                                                      Assembly.GetExecutingAssembly()
-                                                              .CreateInstance(request, true) as Models.OpenAPI.TR))
-            {
-                Debug.WriteLine(json);
-            }
-        }
+            foreach (var json in ctor.OnReceiveTrData(axAPI,
+                                                      e,
+                                                      Constructer.GetInstance(e.sTrCode)))
+                _ = Task.Run(async() =>
+                {
+                    await api.PostExecuteAsync(json, "stock");
+                });
     }
     void OnReceiveTrCondition(object sender, _DKHOpenAPIEvents_OnReceiveTrConditionEvent e)
     {
@@ -162,4 +124,5 @@ public partial class AxKH : UserControl,
         throw new NotImplementedException();
     }
     readonly string id;
+    readonly CoreRestClient api;
 }

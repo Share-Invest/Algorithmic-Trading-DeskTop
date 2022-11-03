@@ -2,10 +2,46 @@
 
 using Newtonsoft.Json;
 
+using System.Text;
+
 namespace ShareInvest.Tr;
 
 class OPTKWFID : TR
 {
+    internal static IEnumerable<Models.OpenAPI.TR> GetListOfStocks(IEnumerable<string> codeListByMarket)
+    {
+        int index = 0;
+        var sb = new StringBuilder(0x100);
+        var codeStack = new Stack<StringBuilder>(0x10);
+
+        foreach (var code in codeListByMarket)
+            if (string.IsNullOrEmpty(code) is false)
+            {
+                if (index++ % 0x63 == 0x62)
+                {
+                    codeStack.Push(sb.Append(code));
+
+                    sb = new StringBuilder();
+                }
+                sb.Append(code).Append(';');
+            }
+        codeStack.Push(sb.Remove(sb.Length - 1, 1));
+
+        while (codeStack.TryPop(out StringBuilder? pop))
+            if (pop is not null && pop.Length > 5)
+            {
+                var listOfStocks = pop.ToString();
+
+                yield return new Models.OpenAPI.Request.OPTKWFID
+                {
+                    Value = new[]
+                    {
+                        listOfStocks
+                    },
+                    PrevNext = listOfStocks.Split(';').Length
+                };
+            }
+    }
     internal override IEnumerable<string> OnReceiveTrData(AxKHOpenAPI ax,
                                                           _DKHOpenAPIEvents_OnReceiveTrDataEvent e,
                                                           Models.OpenAPI.TR? tr)
@@ -31,7 +67,8 @@ class OPTKWFID : TR
                 dic[constructionSupervision] = ax.KOA_Functions(info, code)
                                                  .Replace(';', '+');
 
-                yield return JsonConvert.SerializeObject(dic, Formatting.Indented);
+                if (dic.Count > 0)
+                    yield return JsonConvert.SerializeObject(dic);
             }
     }
     const string info = "GetMasterStockInfo";
