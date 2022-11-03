@@ -1,10 +1,11 @@
 ﻿using AxKHOpenAPILib;
 
+using ShareInvest.Infrastructure.Http;
 using ShareInvest.Mappers;
-using ShareInvest.Models.OpenAPI;
+using ShareInvest.Models.OpenAPI.Observe;
+using ShareInvest.Models.OpenAPI.Request;
 
-using System.Diagnostics;
-using System.Text;
+using System.Reflection;
 
 namespace ShareInvest;
 
@@ -15,9 +16,10 @@ public partial class AxKH : UserControl,
 
     public int ConnectState => axAPI.GetConnectState();
 
-    public AxKH(string id)
+    public AxKH(CoreRestClient api, string id)
     {
         this.id = id;
+        this.api = api;
 
         InitializeComponent();
     }
@@ -34,38 +36,11 @@ public partial class AxKH : UserControl,
 
         return axAPI.CommConnect() == 0;
     }
-    void GetInformationOfCode(IEnumerable<string> codeListByMarket)
-    {
-        int index = 0;
-        var sb = new StringBuilder(0x100);
-        var codeStack = new Stack<StringBuilder>(0x10);
-
-        foreach (var code in codeListByMarket)
-            if (string.IsNullOrEmpty(code) is false)
-            {
-                if (index++ % 0x63 == 0x62)
-                {
-                    codeStack.Push(sb.Append(code));
-                    sb = new StringBuilder();
-                }
-                sb.Append(code).Append(';');
-            }
-        codeStack.Push(sb.Remove(sb.Length - 1, 1));
-
-        while (codeStack.TryPop(out StringBuilder? pop))
-            if (pop is not null && pop.Length > 5)
-            {
-
-
-                if (Status.IsDebugging)
-                    Debug.WriteLine(pop);
-            }
-    }
-    void OnReceiveErrorMessage(int error, string? sRQName)
+    void OnReceiveErrorMessage(string? sRQName, int error)
     {
         if (error < 0)
             Send?.Invoke(this,
-                         new AxMessageEventArgs(Status.Error[error],
+            new AxMessageEventArgs(Status.Error[error],
                                                 sRQName,
                                                 Math.Abs(error).ToString("D4")));
     }
@@ -90,10 +65,43 @@ public partial class AxKH : UserControl,
                                            .Split(';')
                                            .OrderBy(o => Guid.NewGuid()));
 
-            GetInformationOfCode(codeListByMarket);
+            foreach (var tr in Tr.OPTKWFID.GetListOfStocks(codeListByMarket))
+            {
+                var nCodeCount = tr.PrevNext;
+                tr.PrevNext = 0;
+
+                if (tr.Value is not null)
+                    Delay.GetInstance(0x259)
+                         .RequestTheMission(new Task(() =>
+                         {
+                             OnReceiveErrorMessage(tr.RQName,
+                                                   axAPI.CommKwRqData(tr.Value[0],
+                                                                      tr.PrevNext,
+                                                                      nCodeCount,
+                                                                      0,
+                                                                      tr.RQName,
+                                                                      tr.ScreenNo));
+                         }));
+            }
         }
         else
-            OnReceiveErrorMessage(e.nErrCode, sender.GetType().Name);
+            OnReceiveErrorMessage(sender.GetType().Name, e.nErrCode);
+    }
+    void OnReceiveTrData(object sender,
+                               _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
+    {
+        var name = string.Concat(typeof(TR).FullName, '.', e.sTrCode);
+
+        if (Assembly.GetExecutingAssembly()
+                    .CreateInstance(name, true) is TR ctor)
+
+            foreach (var json in ctor.OnReceiveTrData(axAPI,
+                                                      e,
+                                                      Constructer.GetInstance(e.sTrCode)))
+                _ = Task.Run(async() =>
+                {
+                    await api.PostExecuteAsync(json, "stock");
+                });
     }
     void OnReceiveTrCondition(object sender, _DKHOpenAPIEvents_OnReceiveTrConditionEvent e)
     {
@@ -107,10 +115,6 @@ public partial class AxKH : UserControl,
     {
         throw new NotImplementedException();
     }
-    void OnReceiveTrData(object sender, _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
-    {
-        throw new NotImplementedException();
-    }
     void OnReceiveRealData(object sender, _DKHOpenAPIEvents_OnReceiveRealDataEvent e)
     {
         throw new NotImplementedException();
@@ -120,4 +124,5 @@ public partial class AxKH : UserControl,
         throw new NotImplementedException();
     }
     readonly string id;
+    readonly CoreRestClient api;
 }
