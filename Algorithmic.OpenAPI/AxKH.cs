@@ -1,10 +1,11 @@
 ﻿using AxKHOpenAPILib;
 
-using ShareInvest.Infrastructure.Http;
+using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI.Observe;
 using ShareInvest.Models.OpenAPI.Request;
 
+using System.Diagnostics;
 using System.Reflection;
 
 namespace ShareInvest;
@@ -16,7 +17,7 @@ public partial class AxKH : UserControl,
 
     public int ConnectState => axAPI.GetConnectState();
 
-    public AxKH(CoreRestClient api, string id)
+    public AxKH(ICoreClient api, string id)
     {
         this.id = id;
         this.api = api;
@@ -71,37 +72,33 @@ public partial class AxKH : UserControl,
                 tr.PrevNext = 0;
 
                 if (tr.Value is not null)
-                    Delay.GetInstance(0x259)
-                         .RequestTheMission(new Task(() =>
-                         {
-                             OnReceiveErrorMessage(tr.RQName,
-                                                   axAPI.CommKwRqData(tr.Value[0],
-                                                                      tr.PrevNext,
-                                                                      nCodeCount,
-                                                                      0,
-                                                                      tr.RQName,
-                                                                      tr.ScreenNo));
-                         }));
+                    Delay.Instance.RequestTheMission(new Task(() =>
+                    {
+                        OnReceiveErrorMessage(tr.RQName,
+                                              axAPI.CommKwRqData(tr.Value[0],
+                                                                 tr.PrevNext,
+                                                                 nCodeCount,
+                                                                 0,
+                                                                 tr.RQName,
+                                                                 tr.ScreenNo));
+                    }));
             }
         }
         else
             OnReceiveErrorMessage(sender.GetType().Name, e.nErrCode);
     }
     void OnReceiveTrData(object sender,
-                               _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
+                         _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
     {
         var name = string.Concat(typeof(TR).FullName, '.', e.sTrCode);
 
         if (Assembly.GetExecutingAssembly()
                     .CreateInstance(name, true) is TR ctor)
 
-            foreach (var json in ctor.OnReceiveTrData(axAPI,
-                                                      e,
-                                                      Constructer.GetInstance(e.sTrCode)))
-                _ = Task.Run(async() =>
-                {
-                    await api.PostExecuteAsync(json, "stock");
-                });
+            ctor.OnReceiveTrData(api, axAPI, e, Constructer.GetInstance(e.sTrCode));
+#if DEBUG
+        Debug.WriteLine(e.sScrNo);
+#endif
     }
     void OnReceiveTrCondition(object sender, _DKHOpenAPIEvents_OnReceiveTrConditionEvent e)
     {
@@ -124,5 +121,5 @@ public partial class AxKH : UserControl,
         throw new NotImplementedException();
     }
     readonly string id;
-    readonly CoreRestClient api;
+    readonly ICoreClient api;
 }

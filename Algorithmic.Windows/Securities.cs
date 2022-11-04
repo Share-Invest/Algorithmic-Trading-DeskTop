@@ -78,7 +78,7 @@ partial class Securities : Form
                             {
                                 securities.Send += OnReceiveMessage;
 
-                                Delay.GetInstance(0x259).Run();
+                                Delay.Instance.Run();
                             }
                         }
                     }
@@ -110,7 +110,7 @@ partial class Securities : Form
                     {
                         securities.Send += OnReceiveMessage;
 
-                        Delay.GetInstance(0x259).Run();
+                        Delay.Instance.Run();
                     }
                 }
             }));

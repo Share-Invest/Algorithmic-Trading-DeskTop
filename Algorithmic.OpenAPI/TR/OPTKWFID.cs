@@ -2,6 +2,9 @@
 
 using Newtonsoft.Json;
 
+using ShareInvest.Infrastructure;
+
+using System.Diagnostics;
 using System.Text;
 
 namespace ShareInvest.Tr;
@@ -42,11 +45,13 @@ class OPTKWFID : TR
                 };
             }
     }
-    internal override IEnumerable<string> OnReceiveTrData(AxKHOpenAPI ax,
-                                                          _DKHOpenAPIEvents_OnReceiveTrDataEvent e,
-                                                          Models.OpenAPI.TR? tr)
+    internal override void OnReceiveTrData(ICoreClient api,
+                                           AxKHOpenAPI ax,
+                                           _DKHOpenAPIEvents_OnReceiveTrDataEvent e,
+                                           Models.OpenAPI.TR? tr)
     {
         if (tr?.Multiple is not null)
+
             for (int i = 0; i < ax?.GetRepeatCnt(e.sTrCode, e.sRQName); i++)
             {
                 var dic = new Dictionary<string, string>();
@@ -68,7 +73,21 @@ class OPTKWFID : TR
                                                  .Replace(';', '+');
 
                 if (dic.Count > 0)
-                    yield return JsonConvert.SerializeObject(dic);
+
+                    Delay.Instance.RequestTheMission(new Task(async () =>
+                    {
+                        var json = JsonConvert.SerializeObject(dic);
+
+                        var obj = JsonConvert.DeserializeObject<Models.OpenAPI.Response.OPTKWFID>(json);
+
+                        if (obj != null)
+                        {
+                            await api.PostAsync("stock", obj);
+#if DEBUG
+                            Debug.WriteLine(json);
+#endif
+                        }
+                    }));
             }
     }
     const string info = "GetMasterStockInfo";
