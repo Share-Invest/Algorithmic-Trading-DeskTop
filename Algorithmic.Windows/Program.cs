@@ -12,7 +12,9 @@ static class Program
     {
         if (KeyDecoder.ProductKeyFromRegistry is string key)
         {
+#if DEBUG
             Status.SetDebug();
+#endif
             ApplicationConfiguration.Initialize();
             Application.Run(new Securities(new[]
             {

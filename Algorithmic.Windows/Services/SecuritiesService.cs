@@ -12,7 +12,9 @@ class SecuritiesService
     }
     internal ISecuritiesMapper<AxMessageEventArgs> GetSecurities()
     {
-        var api = new CoreRestClient();
+        var api = new CoreHttpClient();
+
+        Delay.Milliseconds = 0x259;
 
         return new AxKH(api, id);
     }
