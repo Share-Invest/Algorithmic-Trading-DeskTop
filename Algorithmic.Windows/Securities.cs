@@ -2,8 +2,8 @@
 
 using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
-using ShareInvest.Observer;
-using ShareInvest.Observer.OpenAPI;
+using ShareInvest.Observers;
+using ShareInvest.Observers.OpenAPI;
 using ShareInvest.Properties;
 using ShareInvest.Services;
 
@@ -14,13 +14,13 @@ namespace ShareInvest;
 
 partial class Securities : Form
 {
-    internal Securities(Icon[] icons, ICoreClient client, string id)
+    internal Securities(Icon[] icons, ICoreClient client, string key)
     {
-        this.id = id;
+        this.key = key;
         this.icons = icons;
         this.client = client;
 
-        securities = SecuritiesExtensions.ConfigureServices(id);
+        securities = SecuritiesExtensions.ConfigureServices(key);
 
         InitializeComponent();
 
@@ -45,13 +45,13 @@ partial class Securities : Form
     }
     async Task OnReceiveMessage(UserInfoEventArgs e)
     {
-        e.UserInfo.Key = id;
+        e.User.Key = key;
 
 #if DEBUG
-        Debug.WriteLine(JsonConvert.SerializeObject(e.UserInfo,
+        Debug.WriteLine(JsonConvert.SerializeObject(e.User,
                                                     Formatting.Indented));
 #endif
-        await client.PostAsync(e.UserInfo.GetType().Name, e.UserInfo);
+        await client.PostAsync(e.User.GetType().Name, e.User);
     }
     async Task OnReceiveMessage(JsonMessageEventArgs e)
     {
@@ -248,5 +248,5 @@ partial class Securities : Form
     readonly ISecuritiesMapper<MessageEventArgs> securities;
     readonly ICoreClient client;
     readonly Icon[] icons;
-    readonly string id;
+    readonly string key;
 }

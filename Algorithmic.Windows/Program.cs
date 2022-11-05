@@ -25,7 +25,7 @@ static class Program
                 Properties.Resources.bird_invisible
             },
             new CoreRestClient(Status.Address),
-            Status.GetId(key.Split('-'))));
+            Status.GetKey(key.Split('-'))));
         }
         GC.Collect();
 
