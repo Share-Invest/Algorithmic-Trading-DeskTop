@@ -1,26 +1,24 @@
 ﻿using AxKHOpenAPILib;
 
-using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
+using ShareInvest.Models;
 using ShareInvest.Models.OpenAPI.Observe;
 using ShareInvest.Models.OpenAPI.Request;
 
-using System.Diagnostics;
 using System.Reflection;
 
 namespace ShareInvest;
 
 public partial class AxKH : UserControl,
-                            ISecuritiesMapper<AxMessageEventArgs>
+                            ISecuritiesMapper<MessageEventArgs>
 {
-    public event EventHandler<AxMessageEventArgs>? Send;
+    public event EventHandler<MessageEventArgs>? Send;
 
     public int ConnectState => axAPI.GetConnectState();
 
-    public AxKH(ICoreClient api, string id)
+    public AxKH()
     {
-        this.id = id;
-        this.api = api;
+        Delay.Milliseconds = 0x259;
 
         InitializeComponent();
     }
@@ -53,52 +51,24 @@ public partial class AxKH : UserControl,
                                             e.sRQName,
                                             e.sScrNo));
     }
-    void OnEventConnect(object sender,
-                        _DKHOpenAPIEvents_OnEventConnectEvent e)
-    {
-        if (e.nErrCode == 0)
-        {
-            var codeListByMarket = new List<string>(axAPI.GetCodeListByMarket("0")
-                                                         .Split(';')
-                                                         .OrderBy(o => Guid.NewGuid()));
-
-            codeListByMarket.AddRange(axAPI.GetCodeListByMarket("10")
-                                           .Split(';')
-                                           .OrderBy(o => Guid.NewGuid()));
-
-            foreach (var tr in Tr.OPTKWFID.GetListOfStocks(codeListByMarket))
-            {
-                var nCodeCount = tr.PrevNext;
-                tr.PrevNext = 0;
-
-                if (tr.Value is not null)
-                    Delay.Instance.RequestTheMission(new Task(() =>
-                    {
-                        OnReceiveErrorMessage(tr.RQName,
-                                              axAPI.CommKwRqData(tr.Value[0],
-                                                                 tr.PrevNext,
-                                                                 nCodeCount,
-                                                                 0,
-                                                                 tr.RQName,
-                                                                 tr.ScreenNo));
-                    }));
-            }
-        }
-        else
-            OnReceiveErrorMessage(sender.GetType().Name, e.nErrCode);
-    }
     void OnReceiveTrData(object sender,
                          _DKHOpenAPIEvents_OnReceiveTrDataEvent e)
     {
         var name = string.Concat(typeof(TR).FullName, '.', e.sTrCode);
 
         if (Assembly.GetExecutingAssembly()
-                    .CreateInstance(name, true) is TR ctor)
+                    .CreateInstance(name, true) is TR tr)
+        {
+            var ctor = Constructer.GetInstance(e.sTrCode);
 
-            ctor.OnReceiveTrData(api, axAPI, e, Constructer.GetInstance(e.sTrCode));
-#if DEBUG
-        Debug.WriteLine(e.sScrNo);
-#endif
+            foreach (var json in tr.OnReceiveTrData(axAPI, e, ctor))
+
+                Send?.Invoke(this, new JsonMessageEventArgs(ctor, json));
+        }
+        Send?.Invoke(this,
+                     new AxMessageEventArgs(e.sTrCode,
+                                            e.sRQName,
+                                            e.sScrNo));
     }
     void OnReceiveTrCondition(object sender, _DKHOpenAPIEvents_OnReceiveTrConditionEvent e)
     {
@@ -120,6 +90,42 @@ public partial class AxKH : UserControl,
     {
         throw new NotImplementedException();
     }
-    readonly string id;
-    readonly ICoreClient api;
+    void OnEventConnect(object sender,
+                        _DKHOpenAPIEvents_OnEventConnectEvent e)
+    {
+        if (e.nErrCode == 0)
+        {
+            GetCodeListByMarket();
+        }
+        else
+            OnReceiveErrorMessage(sender.GetType().Name, e.nErrCode);
+    }
+    void GetCodeListByMarket()
+    {
+        var codeListByMarket = new List<string>(axAPI.GetCodeListByMarket("0")
+                                                        .Split(';')
+                                                        .OrderBy(o => Guid.NewGuid()));
+
+        codeListByMarket.AddRange(axAPI.GetCodeListByMarket("10")
+                                       .Split(';')
+                                       .OrderBy(o => Guid.NewGuid()));
+
+        foreach (var tr in Tr.OPTKWFID.GetListOfStocks(codeListByMarket))
+        {
+            var nCodeCount = tr.PrevNext;
+            tr.PrevNext = 0;
+
+            if (tr.Value is not null)
+                Delay.Instance.RequestTheMission(new Task(() =>
+                {
+                    OnReceiveErrorMessage(tr.RQName,
+                                          axAPI.CommKwRqData(tr.Value[0],
+                                                             tr.PrevNext,
+                                                             nCodeCount,
+                                                             0,
+                                                             tr.RQName,
+                                                             tr.ScreenNo));
+                }));
+        }
+    }
 }

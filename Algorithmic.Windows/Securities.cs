@@ -1,5 +1,8 @@
-﻿using ShareInvest.Mappers;
+﻿using ShareInvest.Infrastructure;
+using ShareInvest.Mappers;
+using ShareInvest.Models;
 using ShareInvest.Models.OpenAPI.Observe;
+using ShareInvest.Models.OpenAPI.Response;
 using ShareInvest.Properties;
 using ShareInvest.Services;
 
@@ -10,27 +13,64 @@ namespace ShareInvest;
 
 partial class Securities : Form
 {
-    internal Securities(Icon[] icons,
-                        SecuritiesService service)
+    internal Securities(Icon[] icons, ICoreClient client, string id)
     {
         this.icons = icons;
-        securities = service.GetSecurities();
+        this.client = client;
+
+        securities = SecuritiesExtensions.ConfigureServices(id);
 
         InitializeComponent();
 
         timer.Start();
     }
-    void OnReceiveMessage(object? sender, AxMessageEventArgs e)
+    void OnReceiveMessage(AxMessageEventArgs e)
     {
         switch (e.Screen)
         {
             case "0106" or "0100":
+
                 Dispose(securities as Control);
                 break;
         }
         var param = $"{DateTime.Now:G}\n[{e.Code}] {e.Title}({e.Screen})";
 
         notifyIcon.Text = param.Length < 0x40 ? param : $"[{e.Code}] {e.Title}({e.Screen})";
+
+#if DEBUG
+        Debug.WriteLine(param);
+#endif
+    }
+    async Task OnReceiveMessage(JsonMessageEventArgs e)
+    {
+        switch (e.Convey)
+        {
+            case OPTKWFID res:
+
+                await client.PostAsync(res.GetType().Name, res);
+                return;
+        }
+    }
+    void OnReceiveMessage(object? sender,
+                          MessageEventArgs e)
+    {
+        _ = BeginInvoke(new Action(async () =>
+        {
+            switch (e.GetType().Name)
+            {
+                case nameof(JsonMessageEventArgs)
+                when e is JsonMessageEventArgs convey:
+
+                    await OnReceiveMessage(convey);
+                    return;
+
+                case nameof(AxMessageEventArgs)
+                when e is AxMessageEventArgs ax:
+
+                    OnReceiveMessage(ax);
+                    return;
+            };
+        }));
     }
     void TimerTick(object sender, EventArgs e)
     {
@@ -104,6 +144,7 @@ partial class Securities : Form
                     IsConnected = securities switch
                     {
                         AxKH ax => ax.CommConnect(),
+
                         _ => false
                     };
                     if (IsConnected)
@@ -174,6 +215,7 @@ partial class Securities : Form
     {
         get; set;
     }
-    readonly ISecuritiesMapper<AxMessageEventArgs> securities;
+    readonly ISecuritiesMapper<MessageEventArgs> securities;
+    readonly ICoreClient client;
     readonly Icon[] icons;
 }
