@@ -2,8 +2,8 @@
 
 using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI.Request;
-using ShareInvest.Observer;
-using ShareInvest.Observer.OpenAPI;
+using ShareInvest.Observers;
+using ShareInvest.Observers.OpenAPI;
 using ShareInvest.Properties;
 
 using System.Reflection;
@@ -107,14 +107,14 @@ public partial class AxKH : UserControl,
     {
         var num = int.TryParse(axAPI.GetLoginInfo(Resources.CNT), out int cnt) ? cnt : 0;
 
-        Send?.Invoke(this, new UserInfoEventArgs(new Models.OpenAPI.UserInfo
+        Send?.Invoke(this, new UserInfoEventArgs(new Models.OpenAPI.User
         {
             Accounts = axAPI.GetLoginInfo(Resources.LIST).Split(';'),
             Name = axAPI.GetLoginInfo(Resources.NAME),
             Id = axAPI.GetLoginInfo(Resources.ID),
             NumberOfAccounts = num,
-            IsMock = string.IsNullOrEmpty(server) ||
-                     int.TryParse(server, out int mock) && mock is not 1,
+            IsNotMock = string.IsNullOrEmpty(server) ||
+                        int.TryParse(server, out int mock) && mock is not 1
         }));
     }
     void GetCodeListByMarket()

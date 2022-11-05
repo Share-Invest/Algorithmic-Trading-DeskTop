@@ -1,5 +1,5 @@
 ﻿using ShareInvest.Mappers;
-using ShareInvest.Observer;
+using ShareInvest.Observers;
 
 namespace ShareInvest.Services;
 
