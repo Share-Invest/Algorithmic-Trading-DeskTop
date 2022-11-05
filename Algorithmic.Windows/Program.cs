@@ -1,5 +1,5 @@
 using ShareInvest.Identifies;
-using ShareInvest.Services;
+using ShareInvest.Infrastructure.Http;
 
 using System.Diagnostics;
 
@@ -12,10 +12,10 @@ static class Program
     {
         if (KeyDecoder.ProductKeyFromRegistry is string key)
         {
-#if DEBUG
             Status.SetDebug();
-#endif
+
             ApplicationConfiguration.Initialize();
+
             Application.Run(new Securities(new[]
             {
                 Properties.Resources.bird_idle,
@@ -24,9 +24,11 @@ static class Program
                 Properties.Resources.bird_sleep,
                 Properties.Resources.bird_invisible
             },
-            new SecuritiesService(Status.GetId(key.Split('-')))));
+            new CoreRestClient(Status.Address),
+            Status.GetId(key.Split('-'))));
         }
         GC.Collect();
+
         Process.GetCurrentProcess().Kill();
     }
 }

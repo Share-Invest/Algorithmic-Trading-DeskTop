@@ -1,5 +1,9 @@
-﻿using ShareInvest.Mappers;
-using ShareInvest.Models.OpenAPI.Observe;
+﻿using Newtonsoft.Json;
+
+using ShareInvest.Infrastructure;
+using ShareInvest.Mappers;
+using ShareInvest.Observer;
+using ShareInvest.Observer.OpenAPI;
 using ShareInvest.Properties;
 using ShareInvest.Services;
 
@@ -10,27 +14,88 @@ namespace ShareInvest;
 
 partial class Securities : Form
 {
-    internal Securities(Icon[] icons,
-                        SecuritiesService service)
+    internal Securities(Icon[] icons, ICoreClient client, string id)
     {
+        this.id = id;
         this.icons = icons;
-        securities = service.GetSecurities();
+        this.client = client;
+
+        securities = SecuritiesExtensions.ConfigureServices(id);
 
         InitializeComponent();
 
         timer.Start();
     }
-    void OnReceiveMessage(object? sender, AxMessageEventArgs e)
+    void OnReceiveMessage(AxMessageEventArgs e)
     {
         switch (e.Screen)
         {
             case "0106" or "0100":
+
                 Dispose(securities as Control);
                 break;
         }
         var param = $"{DateTime.Now:G}\n[{e.Code}] {e.Title}({e.Screen})";
 
         notifyIcon.Text = param.Length < 0x40 ? param : $"[{e.Code}] {e.Title}({e.Screen})";
+
+#if DEBUG
+        Debug.WriteLine(param);
+#endif
+    }
+    async Task OnReceiveMessage(UserInfoEventArgs e)
+    {
+        e.UserInfo.Key = id;
+
+#if DEBUG
+        Debug.WriteLine(JsonConvert.SerializeObject(e.UserInfo,
+                                                    Formatting.Indented));
+#endif
+        await client.PostAsync(e.UserInfo.GetType().Name, e.UserInfo);
+    }
+    async Task OnReceiveMessage(JsonMessageEventArgs e)
+    {
+#if DEBUG
+        Debug.WriteLine(string.Concat(JsonConvert.SerializeObject(e.Convey,
+                                                                  Formatting.Indented),
+                                      '\n',
+                                      JsonConvert.SerializeObject(e.Convey),
+                                      '\n',
+                                      e.Convey?.GetType().Name));
+#endif
+        if (e.Convey is not null)
+
+            await client.PostAsync(e.Convey.GetType().Name, e.Convey);
+    }
+    void OnReceiveMessage(object? sender,
+                          MessageEventArgs e)
+    {
+        _ = BeginInvoke(new Action(async () =>
+        {
+            switch (e.GetType().Name)
+            {
+                case nameof(JsonMessageEventArgs)
+                when e is JsonMessageEventArgs convey:
+
+                    await OnReceiveMessage(convey);
+
+                    return;
+
+                case nameof(AxMessageEventArgs)
+                when e is AxMessageEventArgs ax:
+
+                    OnReceiveMessage(ax);
+
+                    return;
+
+                case nameof(UserInfoEventArgs)
+                when e is UserInfoEventArgs user:
+
+                    await OnReceiveMessage(user);
+
+                    return;
+            };
+        }));
     }
     void TimerTick(object sender, EventArgs e)
     {
@@ -44,6 +109,7 @@ partial class Securities : Form
         }
         else if (FormBorderStyle.Equals(FormBorderStyle.Sizable) &&
                  WindowState.Equals(FormWindowState.Minimized) is false)
+
             WindowState = FormWindowState.Minimized;
 
         else
@@ -57,6 +123,7 @@ partial class Securities : Form
                 if (now.Hour == 8 && now.Minute == 1 && now.Second % 9 == 0 &&
                    (int)now.DayOfWeek > 0 && (int)now.DayOfWeek < 6 &&
                    securities is AxKH ax)
+
                     ax.Dispose();
             }
             else
@@ -64,6 +131,7 @@ partial class Securities : Form
 
             if (now.Second == 0x3A && now.Minute % 2 == 0 &&
                (now.Hour == 5 || now.Hour == 6 && now.Minute < 0x35) is false)
+
                 _ = BeginInvoke(new Action(() =>
                 {
                     try
@@ -92,6 +160,7 @@ partial class Securities : Form
     void StripItemClicked(object? sender, ToolStripItemClickedEventArgs e)
     {
         if (e.ClickedItem.Name.Equals(reference.Name))
+
             _ = BeginInvoke(new Action(() =>
             {
                 if (IsConnected)
@@ -104,6 +173,7 @@ partial class Securities : Form
                     IsConnected = securities switch
                     {
                         AxKH ax => ax.CommConnect(),
+
                         _ => false
                     };
                     if (IsConnected)
@@ -166,6 +236,7 @@ partial class Securities : Form
     void Dispose(IComponent? component)
     {
         if (component is Control control)
+
             control.Dispose();
 
         Dispose();
@@ -174,6 +245,8 @@ partial class Securities : Form
     {
         get; set;
     }
-    readonly ISecuritiesMapper<AxMessageEventArgs> securities;
+    readonly ISecuritiesMapper<MessageEventArgs> securities;
+    readonly ICoreClient client;
     readonly Icon[] icons;
+    readonly string id;
 }

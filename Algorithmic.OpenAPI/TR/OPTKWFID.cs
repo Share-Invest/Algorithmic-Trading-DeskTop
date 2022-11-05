@@ -2,9 +2,8 @@
 
 using Newtonsoft.Json;
 
-using ShareInvest.Infrastructure;
+using ShareInvest.Properties;
 
-using System.Diagnostics;
 using System.Text;
 
 namespace ShareInvest.Tr;
@@ -45,10 +44,9 @@ class OPTKWFID : TR
                 };
             }
     }
-    internal override void OnReceiveTrData(ICoreClient api,
-                                           AxKHOpenAPI ax,
-                                           _DKHOpenAPIEvents_OnReceiveTrDataEvent e,
-                                           Models.OpenAPI.TR? tr)
+    internal override IEnumerable<string> OnReceiveTrData(AxKHOpenAPI ax,
+                                                          _DKHOpenAPIEvents_OnReceiveTrDataEvent e,
+                                                          Models.OpenAPI.TR? tr)
     {
         if (tr?.Multiple is not null)
 
@@ -66,31 +64,15 @@ class OPTKWFID : TR
                        listingDate = nameof(Models.OpenAPI.Response.OPTKWFID.ListingDate);
 
                 dic[state] = ax.GetMasterStockState(code);
-                dic[tr.Multiple[0x24]] = ax.KOA_Functions(cnt, code);
-                dic[investmentCaution] = ax.KOA_Functions(warning, code);
+                dic[tr.Multiple[0x24]] = ax.KOA_Functions(Resources.EX, code);
+                dic[investmentCaution] = ax.KOA_Functions(Resources.WARNING, code);
                 dic[listingDate] = ax.GetMasterListedStockDate(code);
-                dic[constructionSupervision] = ax.KOA_Functions(info, code)
+                dic[constructionSupervision] = ax.KOA_Functions(Resources.INFO, code)
                                                  .Replace(';', '+');
 
                 if (dic.Count > 0)
 
-                    Delay.Instance.RequestTheMission(new Task(async () =>
-                    {
-                        var json = JsonConvert.SerializeObject(dic);
-
-                        var obj = JsonConvert.DeserializeObject<Models.OpenAPI.Response.OPTKWFID>(json);
-
-                        if (obj != null)
-                        {
-                            await api.PostAsync("stock", obj);
-#if DEBUG
-                            Debug.WriteLine(json);
-#endif
-                        }
-                    }));
+                    yield return JsonConvert.SerializeObject(dic);
             }
     }
-    const string info = "GetMasterStockInfo";
-    const string cnt = "GetMasterListedStockCntEx";
-    const string warning = "IsOrderWarningStock";
 }
