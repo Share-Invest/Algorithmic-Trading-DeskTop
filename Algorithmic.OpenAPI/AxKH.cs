@@ -1,9 +1,10 @@
 ﻿using AxKHOpenAPILib;
 
 using ShareInvest.Mappers;
-using ShareInvest.Models;
-using ShareInvest.Models.OpenAPI.Observe;
 using ShareInvest.Models.OpenAPI.Request;
+using ShareInvest.Observer;
+using ShareInvest.Observer.OpenAPI;
+using ShareInvest.Properties;
 
 using System.Reflection;
 
@@ -39,7 +40,7 @@ public partial class AxKH : UserControl,
     {
         if (error < 0)
             Send?.Invoke(this,
-            new AxMessageEventArgs(Status.Error[error],
+                         new AxMessageEventArgs(Status.Error[error],
                                                 sRQName,
                                                 Math.Abs(error).ToString("D4")));
     }
@@ -95,16 +96,32 @@ public partial class AxKH : UserControl,
     {
         if (e.nErrCode == 0)
         {
+            GetUserInfo(axAPI.GetLoginInfo(Resources.SERVER));
+
             GetCodeListByMarket();
         }
         else
             OnReceiveErrorMessage(sender.GetType().Name, e.nErrCode);
     }
+    void GetUserInfo(string server)
+    {
+        var num = int.TryParse(axAPI.GetLoginInfo(Resources.CNT), out int cnt) ? cnt : 0;
+
+        Send?.Invoke(this, new UserInfoEventArgs(new Models.OpenAPI.UserInfo
+        {
+            Accounts = axAPI.GetLoginInfo(Resources.LIST).Split(';'),
+            Name = axAPI.GetLoginInfo(Resources.NAME),
+            Id = axAPI.GetLoginInfo(Resources.ID),
+            NumberOfAccounts = num,
+            IsMock = string.IsNullOrEmpty(server) ||
+                     int.TryParse(server, out int mock) && mock is not 1,
+        }));
+    }
     void GetCodeListByMarket()
     {
         var codeListByMarket = new List<string>(axAPI.GetCodeListByMarket("0")
-                                                        .Split(';')
-                                                        .OrderBy(o => Guid.NewGuid()));
+                                                     .Split(';')
+                                                     .OrderBy(o => Guid.NewGuid()));
 
         codeListByMarket.AddRange(axAPI.GetCodeListByMarket("10")
                                        .Split(';')

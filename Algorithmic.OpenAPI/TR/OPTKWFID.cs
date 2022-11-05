@@ -2,6 +2,8 @@
 
 using Newtonsoft.Json;
 
+using ShareInvest.Properties;
+
 using System.Text;
 
 namespace ShareInvest.Tr;
@@ -62,10 +64,10 @@ class OPTKWFID : TR
                        listingDate = nameof(Models.OpenAPI.Response.OPTKWFID.ListingDate);
 
                 dic[state] = ax.GetMasterStockState(code);
-                dic[tr.Multiple[0x24]] = ax.KOA_Functions(cnt, code);
-                dic[investmentCaution] = ax.KOA_Functions(warning, code);
+                dic[tr.Multiple[0x24]] = ax.KOA_Functions(Resources.EX, code);
+                dic[investmentCaution] = ax.KOA_Functions(Resources.WARNING, code);
                 dic[listingDate] = ax.GetMasterListedStockDate(code);
-                dic[constructionSupervision] = ax.KOA_Functions(info, code)
+                dic[constructionSupervision] = ax.KOA_Functions(Resources.INFO, code)
                                                  .Replace(';', '+');
 
                 if (dic.Count > 0)
@@ -73,7 +75,4 @@ class OPTKWFID : TR
                     yield return JsonConvert.SerializeObject(dic);
             }
     }
-    const string info = "GetMasterStockInfo";
-    const string cnt = "GetMasterListedStockCntEx";
-    const string warning = "IsOrderWarningStock";
 }
