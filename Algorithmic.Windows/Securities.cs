@@ -1,7 +1,6 @@
-﻿using Newtonsoft.Json;
-
-using ShareInvest.Infrastructure;
+﻿using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
+using ShareInvest.Models.OpenAPI;
 using ShareInvest.Observers;
 using ShareInvest.Observers.OpenAPI;
 using ShareInvest.Properties;
@@ -26,43 +25,38 @@ partial class Securities : Form
 
         timer.Start();
     }
-    void OnReceiveMessage(AxMessageEventArgs e)
+    async Task OnReceiveMessage(AxMessageEventArgs e)
     {
         switch (e.Screen)
         {
             case "0106" or "0100":
 
                 Dispose(securities as Control);
+
                 break;
         }
-        var param = $"{DateTime.Now:G}\n[{e.Code}] {e.Title}({e.Screen})";
-
+        var now = DateTime.Now;
+        var param = $"{now:G}\n[{e.Code}] {e.Title}({e.Screen})";
+        var message = new KiwoomMessage
+        {
+            Code = e.Code,
+            Title = e.Title,
+            Screen = e.Screen,
+            Lookup = now.Ticks,
+            Key = key
+        };
         notifyIcon.Text = param.Length < 0x40 ? param : $"[{e.Code}] {e.Title}({e.Screen})";
 
-#if DEBUG
-        Debug.WriteLine(param);
-#endif
+        await client.PostAsync(message.GetType().Name, message);
     }
     async Task OnReceiveMessage(UserInfoEventArgs e)
     {
         e.User.Key = key;
 
-#if DEBUG
-        Debug.WriteLine(JsonConvert.SerializeObject(e.User,
-                                                    Formatting.Indented));
-#endif
         await client.PostAsync(e.User.GetType().Name, e.User);
     }
     async Task OnReceiveMessage(JsonMessageEventArgs e)
     {
-#if DEBUG
-        Debug.WriteLine(string.Concat(JsonConvert.SerializeObject(e.Convey,
-                                                                  Formatting.Indented),
-                                      '\n',
-                                      JsonConvert.SerializeObject(e.Convey),
-                                      '\n',
-                                      e.Convey?.GetType().Name));
-#endif
         if (e.Convey is not null)
 
             await client.PostAsync(e.Convey.GetType().Name, e.Convey);
@@ -84,7 +78,7 @@ partial class Securities : Form
                 case nameof(AxMessageEventArgs)
                 when e is AxMessageEventArgs ax:
 
-                    OnReceiveMessage(ax);
+                    await OnReceiveMessage(ax);
 
                     return;
 
