@@ -107,7 +107,7 @@ public partial class AxKH : UserControl,
     {
         var num = int.TryParse(axAPI.GetLoginInfo(Resources.CNT), out int cnt) ? cnt : 0;
 
-        Send?.Invoke(this, new UserInfoEventArgs(new Models.OpenAPI.User
+        Send?.Invoke(this, new UserInfoEventArgs(new Models.OpenAPI.KiwoomUser
         {
             Accounts = axAPI.GetLoginInfo(Resources.LIST).Split(';'),
             Name = axAPI.GetLoginInfo(Resources.NAME),
