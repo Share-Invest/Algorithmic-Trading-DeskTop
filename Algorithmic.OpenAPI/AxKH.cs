@@ -1,11 +1,14 @@
 ﻿using AxKHOpenAPILib;
 
+using Newtonsoft.Json;
+
 using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI.Request;
 using ShareInvest.Observers;
 using ShareInvest.Observers.OpenAPI;
 using ShareInvest.Properties;
 
+using System.Diagnostics;
 using System.Reflection;
 
 namespace ShareInvest;
@@ -22,6 +25,32 @@ public partial class AxKH : UserControl,
         Delay.Milliseconds = 0x259;
 
         InitializeComponent();
+    }
+    public void CommRqData(Models.OpenAPI.TR tr)
+    {
+        var scrNo = tr.ScreenNo;
+
+        Delay.Instance.RequestTheMission(new Task(() =>
+        {
+            for (int i = 0; i < tr.Id.Length; i++)
+                axAPI.SetInputValue(tr.Id[i], tr.Value?[i]);
+
+            OnReceiveErrorMessage(tr.RQName,
+                                  axAPI.CommRqData(tr.RQName,
+                                                   tr.TrCode,
+                                                   tr.PrevNext,
+                                                   scrNo));
+        }));
+        var tryAdd = Constructer.TryAdd(scrNo, tr);
+#if DEBUG
+        Debug.WriteLine(JsonConvert.SerializeObject(new
+        {
+            scrNo,
+            rqName = tr.RQName,
+            tryAdd
+        },
+        Formatting.Indented));
+#endif
     }
     public bool CommConnect()
     {
@@ -60,7 +89,7 @@ public partial class AxKH : UserControl,
         if (Assembly.GetExecutingAssembly()
                     .CreateInstance(name, true) is TR tr)
         {
-            var ctor = Constructer.GetInstance(e.sTrCode);
+            var ctor = Constructer.GetInstance(e.sTrCode, e.sScrNo);
 
             foreach (var json in tr.OnReceiveTrData(axAPI, e, ctor))
 
@@ -109,7 +138,10 @@ public partial class AxKH : UserControl,
 
         Send?.Invoke(this, new UserInfoEventArgs(new Models.OpenAPI.KiwoomUser
         {
-            Accounts = axAPI.GetLoginInfo(Resources.LIST).Split(';'),
+            Accounts = axAPI.GetLoginInfo(Resources.LIST)
+                            .Split(';')
+                            .Where(o => o.Length == 0xA)
+                            .ToArray(),
             Name = axAPI.GetLoginInfo(Resources.NAME),
             Id = axAPI.GetLoginInfo(Resources.ID),
             NumberOfAccounts = num,

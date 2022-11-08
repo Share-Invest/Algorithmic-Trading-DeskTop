@@ -1,4 +1,6 @@
-﻿using ShareInvest.Infrastructure;
+﻿using Newtonsoft.Json;
+
+using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI;
 using ShareInvest.Observers;
@@ -53,13 +55,52 @@ partial class Securities : Form
     {
         e.User.Key = key;
 
+        switch (securities)
+        {
+            case AxKH ax when e.User is KiwoomUser kw &&
+                              kw.Accounts is not null:
+
+                foreach (var acc in kw.Accounts)
+                {
+                    var compareTo = acc[^2..].CompareTo("31");
+
+                    if (compareTo < 0)
+                    {
+                        ax.CommRqData(new Models.OpenAPI.Request.OPW00004
+                        {
+                            PrevNext = 0,
+                            Value = new[] { acc, string.Empty, "0", "00" }
+                        });
+                        continue;
+                    }
+                    if (compareTo == 0)
+                    {
+
+                        continue;
+                    }
+#if DEBUG
+                    Debug.WriteLine(JsonConvert.SerializeObject(new
+                    {
+                        account = acc,
+                        name = kw.Name
+                    },
+                    Formatting.Indented));
+#endif
+                }
+                break;
+        }
         await client.PostAsync(e.User.GetType().Name, e.User);
     }
     async Task OnReceiveMessage(JsonMessageEventArgs e)
     {
         if (e.Convey is not null)
-
+        {
             await client.PostAsync(e.Convey.GetType().Name, e.Convey);
+#if DEBUG
+            Debug.WriteLine(JsonConvert.SerializeObject(e.Convey,
+                                                        Formatting.Indented));
+#endif
+        }
     }
     void OnReceiveMessage(object? sender,
                           MessageEventArgs e)
