@@ -6,7 +6,7 @@ using ShareInvest.Models.OpenAPI.Response;
 
 namespace ShareInvest.Tr;
 
-class OPW00004 : TR
+class OPW00005 : TR
 {
     internal override IEnumerable<string> OnReceiveTrData(AxKHOpenAPI ax,
                                                           _DKHOpenAPIEvents_OnReceiveTrDataEvent e,
@@ -32,7 +32,7 @@ class OPW00004 : TR
                 }
                 if (dic.Count > 1)
                 {
-                    dic[nameof(AccountOPW00004.Date)] = DateTime.Now.ToString("d",
+                    dic[nameof(AccountOPW00005.Date)] = DateTime.Now.ToString("d",
                                                                       Culture);
 
                     yield return JsonConvert.SerializeObject(dic);
@@ -56,7 +56,7 @@ class OPW00004 : TR
                     }
                     if (dic.Count > 1)
                     {
-                        dic[nameof(BalanceOPW00004.Date)] = DateTime.Now.ToString("d",
+                        dic[nameof(BalanceOPW00005.Date)] = DateTime.Now.ToString("d",
                                                                           Culture);
 
                         yield return JsonConvert.SerializeObject(dic);

@@ -68,8 +68,24 @@ partial class Securities : Form
                     {
                         ax.CommRqData(new Models.OpenAPI.Request.OPW00004
                         {
-                            PrevNext = 0,
-                            Value = new[] { acc, string.Empty, "0", "00" }
+                            Value = new[]
+                            {
+                                acc,
+                                string.Empty,
+                                "0",
+                                "00"
+                            },
+                            PrevNext = 0
+                        });
+                        ax.CommRqData(new Models.OpenAPI.Request.OPW00005
+                        {
+                            Value = new[]
+                            {
+                                acc,
+                                string.Empty,
+                                "00"
+                            },
+                            PrevNext = 0
                         });
                         continue;
                     }
@@ -97,8 +113,12 @@ partial class Securities : Form
         {
             await client.PostAsync(e.Convey.GetType().Name, e.Convey);
 #if DEBUG
-            Debug.WriteLine(JsonConvert.SerializeObject(e.Convey,
-                                                        Formatting.Indented));
+            Debug.WriteLine(JsonConvert.SerializeObject(new
+            {
+                convey = e.Convey,
+                name = e.Convey.GetType().Name
+            },
+            Formatting.Indented));
 #endif
         }
     }
