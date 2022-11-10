@@ -27,9 +27,9 @@ partial class Securities : Form
 
         timer.Start();
     }
-    async Task OnReceiveMessage(AxMessageEventArgs e)
+    async Task OnReceiveMessage(AxMessageEventArgs? e)
     {
-        switch (e.Screen)
+        switch (e?.Screen)
         {
             case "0106" or "0100":
 
@@ -38,22 +38,27 @@ partial class Securities : Form
                 break;
         }
         var now = DateTime.Now;
-        var param = $"{now:G}\n[{e.Code}] {e.Title}({e.Screen})";
+        var param = $"{now:G}\n[{e?.Code}] {e?.Title}({e?.Screen})";
         var message = new KiwoomMessage
         {
-            Code = e.Code,
-            Title = e.Title,
-            Screen = e.Screen,
+            Code = e?.Code,
+            Title = e?.Title,
+            Screen = e?.Screen,
             Lookup = now.Ticks,
             Key = key
         };
-        notifyIcon.Text = param.Length < 0x40 ? param : $"[{e.Code}] {e.Title}({e.Screen})";
+        notifyIcon.Text = param.Length < 0x40 ? param : $"[{e?.Code}] {e?.Title}({e?.Screen})";
 
         await client.PostAsync(message.GetType().Name, message);
     }
-    async Task OnReceiveMessage(UserInfoEventArgs e)
+    async Task OnReceiveMessage(UserInfoEventArgs? e)
     {
+        if (e is null)
+            return;
+
         e.User.Key = key;
+
+        await client.PostAsync(e.User.GetType().Name, e.User);
 
         switch (securities)
         {
@@ -105,11 +110,10 @@ partial class Securities : Form
                 }
                 break;
         }
-        await client.PostAsync(e.User.GetType().Name, e.User);
     }
-    async Task OnReceiveMessage(JsonMessageEventArgs e)
+    async Task OnReceiveMessage(JsonMessageEventArgs? e)
     {
-        if (e.Convey is not null)
+        if (e?.Convey is not null)
         {
             await client.PostAsync(e.Convey.GetType().Name, e.Convey);
 #if DEBUG
@@ -129,25 +133,24 @@ partial class Securities : Form
         {
             switch (e.GetType().Name)
             {
-                case nameof(JsonMessageEventArgs)
-                when e is JsonMessageEventArgs convey:
+                case nameof(RealMessageEventArgs):
 
-                    await OnReceiveMessage(convey);
 
                     return;
 
-                case nameof(AxMessageEventArgs)
-                when e is AxMessageEventArgs ax:
+                case nameof(JsonMessageEventArgs):
 
-                    await OnReceiveMessage(ax);
-
+                    await OnReceiveMessage(e as JsonMessageEventArgs);
                     return;
 
-                case nameof(UserInfoEventArgs)
-                when e is UserInfoEventArgs user:
+                case nameof(AxMessageEventArgs):
 
-                    await OnReceiveMessage(user);
+                    await OnReceiveMessage(e as AxMessageEventArgs);
+                    return;
 
+                case nameof(UserInfoEventArgs):
+
+                    await OnReceiveMessage(e as UserInfoEventArgs);
                     return;
             };
         }));
