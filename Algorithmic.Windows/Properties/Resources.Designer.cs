@@ -111,11 +111,29 @@ namespace ShareInvest.Properties {
         }
         
         /// <summary>
+        ///   /hubs/kiwoom과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        internal static string KIWOOM {
+            get {
+                return ResourceManager.GetString("KIWOOM", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   opstarter과(와) 유사한 지역화된 문자열을 찾습니다.
         /// </summary>
         internal static string OP {
             get {
                 return ResourceManager.GetString("OP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   장시작시간과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        internal static string OPERATION {
+            get {
+                return ResourceManager.GetString("OPERATION", resourceCulture);
             }
         }
         

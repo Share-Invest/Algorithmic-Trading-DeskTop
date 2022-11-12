@@ -1,10 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.SignalR.Client;
+
+using Newtonsoft.Json;
 
 using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
 using ShareInvest.Models.OpenAPI;
 using ShareInvest.Observers;
 using ShareInvest.Observers.OpenAPI;
+using ShareInvest.Observers.Socket;
 using ShareInvest.Properties;
 using ShareInvest.Services;
 
@@ -15,16 +18,26 @@ namespace ShareInvest;
 
 partial class Securities : Form
 {
-    internal Securities(Icon[] icons, ICoreClient client, string key)
+    internal Securities(Icon[] icons,
+                        ICoreClient client,
+                        ISocketClient<MessageEventArgs> socket,
+                        string key)
     {
         this.key = key;
         this.icons = icons;
         this.client = client;
+        this.socket = socket;
 
         securities = SecuritiesExtensions.ConfigureServices(key);
 
         InitializeComponent();
 
+        socket.Send += new EventHandler<MessageEventArgs>((sender, e) =>
+        {
+            var state = (e as SignalEventArgs)?.State;
+
+            notifyIcon.Text = $"{DateTime.Now:g}\n[{state}] {sender?.GetType().Name}";
+        });
         timer.Start();
     }
     async Task OnReceiveMessage(AxMessageEventArgs? e)
@@ -49,7 +62,7 @@ partial class Securities : Form
         };
         notifyIcon.Text = param.Length < 0x40 ? param : $"[{e?.Code}] {e?.Title}({e?.Screen})";
 
-        await client.PostAsync(message.GetType().Name, message);
+        _ = await client.PostAsync(message.GetType().Name, message);
     }
     async Task OnReceiveMessage(UserInfoEventArgs? e)
     {
@@ -58,12 +71,11 @@ partial class Securities : Form
 
         e.User.Key = key;
 
-        await client.PostAsync(e.User.GetType().Name, e.User);
+        var res = await client.PostAsync(e.User.GetType().Name, e.User);
 
         switch (securities)
         {
-            case AxKH ax when e.User is KiwoomUser kw &&
-                              kw.Accounts is not null:
+            case AxKH ax when e.User is KiwoomUser kw && kw.Accounts is not null:
 
                 foreach (var acc in kw.Accounts)
                 {
@@ -115,7 +127,7 @@ partial class Securities : Form
     {
         if (e?.Convey is not null)
         {
-            await client.PostAsync(e.Convey.GetType().Name, e.Convey);
+            _ = await client.PostAsync(e.Convey.GetType().Name, e.Convey);
 #if DEBUG
             Debug.WriteLine(JsonConvert.SerializeObject(new
             {
@@ -126,34 +138,45 @@ partial class Securities : Form
 #endif
         }
     }
-    void OnReceiveMessage(object? sender,
-                          MessageEventArgs e)
+    async Task OnReceiveMessage(RealMessageEventArgs? e)
+    {
+        if (e is not null)
+        {
+            if (IsAdministrator)
+            {
+                await socket.Hub.SendAsync(e.Type, e.Key, e.Data);
+            }
+            if (Resources.OPERATION.Equals(e.Type) &&
+                Real.GetOperation(e.Data.Split('\t')[0]) is Operation o)
+            {
+                notifyIcon.Text = $"{DateTime.Now:G}\n{Enum.GetName(o)}";
+            }
+        }
+    }
+    void OnReceiveMessage(object? sender, MessageEventArgs e)
     {
         _ = BeginInvoke(new Action(async () =>
-        {
-            switch (e.GetType().Name)
+
+            await (e.GetType().Name switch
             {
-                case nameof(RealMessageEventArgs):
+                nameof(RealMessageEventArgs) =>
 
+                    OnReceiveMessage(e as RealMessageEventArgs),
 
-                    return;
+                nameof(JsonMessageEventArgs) =>
 
-                case nameof(JsonMessageEventArgs):
+                    OnReceiveMessage(e as JsonMessageEventArgs),
 
-                    await OnReceiveMessage(e as JsonMessageEventArgs);
-                    return;
+                nameof(AxMessageEventArgs) =>
 
-                case nameof(AxMessageEventArgs):
+                    OnReceiveMessage(e as AxMessageEventArgs),
 
-                    await OnReceiveMessage(e as AxMessageEventArgs);
-                    return;
+                nameof(UserInfoEventArgs) =>
 
-                case nameof(UserInfoEventArgs):
+                    OnReceiveMessage(e as UserInfoEventArgs),
 
-                    await OnReceiveMessage(e as UserInfoEventArgs);
-                    return;
-            };
-        }));
+                _ => Task.CompletedTask
+            })));
     }
     void TimerTick(object sender, EventArgs e)
     {
@@ -167,9 +190,33 @@ partial class Securities : Form
         }
         else if (FormBorderStyle.Equals(FormBorderStyle.Sizable) &&
                  WindowState.Equals(FormWindowState.Minimized) is false)
+        {
+            _ = Task.Run(async () =>
+            {
+                while (HubConnectionState.Disconnected == socket.Hub.State)
+                    try
+                    {
+                        await socket.Hub.StartAsync();
+                    }
+                    catch
+                    {
+                        await Task.Delay(0x400);
+                    }
+                IsAdministrator = Status.IsDebugging;
 
+                var ax = securities as AxKH;
+
+                while (HubConnectionState.Connected == socket.Hub.State)
+                {
+                    if (ax?.ConnectState == 1)
+                    {
+
+                    }
+                    await Task.Delay(0x200);
+                }
+            });
             WindowState = FormWindowState.Minimized;
-
+        }
         else
         {
             var now = DateTime.Now;
@@ -179,10 +226,9 @@ partial class Securities : Form
                 notifyIcon.Icon = icons[now.Second % 4];
 
                 if (now.Hour == 8 && now.Minute == 1 && now.Second % 9 == 0 &&
-                   (int)now.DayOfWeek > 0 && (int)now.DayOfWeek < 6 &&
-                   securities is AxKH ax)
+                   (int)now.DayOfWeek > 0 && (int)now.DayOfWeek < 6)
 
-                    ax.Dispose();
+                    (securities as Component)?.Dispose();
             }
             else
                 notifyIcon.Icon = icons[^1];
@@ -303,7 +349,12 @@ partial class Securities : Form
     {
         get; set;
     }
+    bool IsAdministrator
+    {
+        get; set;
+    }
     readonly ISecuritiesMapper<MessageEventArgs> securities;
+    readonly ISocketClient<MessageEventArgs> socket;
     readonly ICoreClient client;
     readonly Icon[] icons;
     readonly string key;
