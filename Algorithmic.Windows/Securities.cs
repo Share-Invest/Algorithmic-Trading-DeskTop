@@ -133,8 +133,7 @@ partial class Securities : Form
             {
                 convey = e.Convey,
                 name = e.Convey.GetType().Name
-            },
-            Formatting.Indented));
+            }));
 #endif
         }
     }
@@ -205,12 +204,17 @@ partial class Securities : Form
                 IsAdministrator = Status.IsDebugging;
 
                 var ax = securities as AxKH;
+                var storage = int.MinValue;
 
                 while (HubConnectionState.Connected == socket.Hub.State)
                 {
-                    if (ax?.ConnectState == 1)
-                    {
+                    var count = Delay.Instance.Count;
 
+                    if (storage != count && IsConnected && ax?.ConnectState == 1)
+                    {
+                        await socket.Hub.SendAsync(nameof(IHubs.GatherCluesToPrioritize),
+                                                   count);
+                        storage = count;
                     }
                     await Task.Delay(0x200);
                 }

@@ -22,7 +22,7 @@ public partial class AxKH : UserControl,
 
     public AxKH()
     {
-        Delay.Milliseconds = 0x259;
+        Delay.Instance.Milliseconds = 0x259;
 
         InitializeComponent();
     }
