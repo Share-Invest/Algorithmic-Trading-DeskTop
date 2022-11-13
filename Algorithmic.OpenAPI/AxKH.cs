@@ -22,7 +22,7 @@ public partial class AxKH : UserControl,
 
     public AxKH()
     {
-        Delay.Milliseconds = 0x259;
+        Delay.Instance.Milliseconds = 0x259;
 
         InitializeComponent();
     }
@@ -100,6 +100,14 @@ public partial class AxKH : UserControl,
                                             e.sRQName,
                                             e.sScrNo));
     }
+    void OnReceiveRealData(object sender,
+                           _DKHOpenAPIEvents_OnReceiveRealDataEvent e)
+    {
+        Send?.Invoke(this,
+                     new RealMessageEventArgs(e.sRealType,
+                                              e.sRealKey,
+                                              e.sRealData));
+    }
     void OnReceiveTrCondition(object sender, _DKHOpenAPIEvents_OnReceiveTrConditionEvent e)
     {
         throw new NotImplementedException();
@@ -109,10 +117,6 @@ public partial class AxKH : UserControl,
         throw new NotImplementedException();
     }
     void OnReceiveConditionVersion(object sender, _DKHOpenAPIEvents_OnReceiveConditionVerEvent e)
-    {
-        throw new NotImplementedException();
-    }
-    void OnReceiveRealData(object sender, _DKHOpenAPIEvents_OnReceiveRealDataEvent e)
     {
         throw new NotImplementedException();
     }

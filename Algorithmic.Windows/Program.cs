@@ -1,5 +1,7 @@
 using ShareInvest.Identifies;
 using ShareInvest.Infrastructure.Http;
+using ShareInvest.Infrastructure.Socket;
+using ShareInvest.Properties;
 
 using System.Diagnostics;
 
@@ -18,13 +20,16 @@ static class Program
 
             Application.Run(new Securities(new[]
             {
-                Properties.Resources.bird_idle,
-                Properties.Resources.bird_awake,
-                Properties.Resources.bird_alert,
-                Properties.Resources.bird_sleep,
-                Properties.Resources.bird_invisible
+                Resources.bird_idle,
+                Resources.bird_awake,
+                Resources.bird_alert,
+                Resources.bird_sleep,
+                Resources.bird_invisible
             },
             new CoreRestClient(Status.Address),
+
+            new CoreSignalR(string.Concat(Status.Address,
+                                          Resources.KIWOOM)),
             Status.GetKey(key.Split('-'))));
         }
         GC.Collect();
