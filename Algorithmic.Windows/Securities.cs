@@ -141,10 +141,12 @@ partial class Securities : Form
     {
         if (e is not null)
         {
+#if DEBUG
             if (IsAdministrator)
             {
                 await socket.Hub.SendAsync(e.Type, e.Key, e.Data);
             }
+#endif
             if (Resources.OPERATION.Equals(e.Type) &&
                 Real.GetOperation(e.Data.Split('\t')[0]) is Operation o)
             {
@@ -229,10 +231,12 @@ partial class Securities : Form
             {
                 notifyIcon.Icon = icons[now.Second % 4];
 
+#if DEBUG
                 if (now.Hour == 8 && now.Minute == 1 && now.Second % 9 == 0 &&
                    (int)now.DayOfWeek > 0 && (int)now.DayOfWeek < 6)
 
                     (securities as Component)?.Dispose();
+#endif
             }
             else
                 notifyIcon.Icon = icons[^1];
