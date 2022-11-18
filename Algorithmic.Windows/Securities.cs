@@ -143,10 +143,10 @@ partial class Securities : Form
         {
 #if DEBUG
             if (IsAdministrator)
+#endif
             {
                 await socket.Hub.SendAsync(e.Type, e.Key, e.Data);
             }
-#endif
             if (Resources.OPERATION.Equals(e.Type) &&
                 Real.GetOperation(e.Data.Split('\t')[0]) is Operation o)
             {

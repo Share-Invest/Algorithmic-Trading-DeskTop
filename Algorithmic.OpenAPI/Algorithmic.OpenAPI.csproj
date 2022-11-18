@@ -8,16 +8,17 @@
 		<AssemblyName>Kiwoom</AssemblyName>
 		<RootNamespace>ShareInvest</RootNamespace>
 		<Authors>cyberprophet</Authors>
-		<Company>ShareInvest</Company>
-		<Product>Algorithmic Trading</Product>
+		<Company>ShareInvest Corp.</Company>
+		<Product>Algorithmic-Trading</Product>
 		<Copyright>Copyright ⓒ 2022, ShareInvest</Copyright>
 		<PlatformTarget>x86</PlatformTarget>
+		<Version>0.0.0.0</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Library.October.2022\Algorithmic.Library\Algorithmic.Library.csproj" />
+		<ProjectReference Include="..\..\Library.October.2022\Algorithmic.Library\Algorithmic.Library.csproj" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<Reference Include="AxKHOpenAPILib">
 			<HintPath>..\..\Algorithmic.Trading\AxKHOpenAPILib.dll</HintPath>
@@ -26,20 +27,20 @@
 			<HintPath>..\..\Algorithmic.Trading\KHOpenAPILib.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-	
+
 	<ItemGroup>
-	  <Compile Update="Properties\Resources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>Resources.resx</DependentUpon>
-	  </Compile>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
 	</ItemGroup>
-	
+
 	<ItemGroup>
-	  <EmbeddedResource Update="Properties\Resources.resx">
-	    <Generator>ResXFileCodeGenerator</Generator>
-	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
 	</ItemGroup>
-	
+
 </Project>
