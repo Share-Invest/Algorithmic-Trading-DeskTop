@@ -20,7 +20,10 @@ class OPW00005 : TR
             {
                 dic = new Dictionary<string, string>
                 {
-                    { tr.Id[0], tr.Value[0] }
+                    {
+                        tr.Id[0],
+                        tr.Value[0]
+                    }
                 };
                 for (int i = 0; i < tr.Single.Length; i++)
                 {
@@ -33,7 +36,7 @@ class OPW00005 : TR
                 if (dic.Count > 1)
                 {
                     dic[nameof(AccountOPW00005.Date)] = DateTime.Now.ToString("d",
-                                                                      Culture);
+                                                                              Culture);
 
                     yield return JsonConvert.SerializeObject(dic);
                 }
@@ -44,7 +47,10 @@ class OPW00005 : TR
                 {
                     dic = new Dictionary<string, string>
                     {
-                        { tr.Id[0], tr.Value[0] }
+                        {
+                            tr.Id[0],
+                            tr.Value[0]
+                        }
                     };
                     for (int j = 0; j < tr.Multiple.Length; j++)
                     {
@@ -57,7 +63,7 @@ class OPW00005 : TR
                     if (dic.Count > 1)
                     {
                         dic[nameof(BalanceOPW00005.Date)] = DateTime.Now.ToString("d",
-                                                                          Culture);
+                                                                                  Culture);
 
                         yield return JsonConvert.SerializeObject(dic);
                     }

@@ -57,8 +57,8 @@ class OPTKWFID : TR
                 for (int j = 0; j < tr.Multiple.Length; j++)
                     dic[tr.Multiple[j]] = ax.GetCommData(e.sTrCode, e.sRQName, i, tr.Multiple[j]).Trim();
 
-                var code = dic[tr.Multiple[0]];
-                string state = nameof(Models.OpenAPI.Response.OPTKWFID.State),
+                string code = dic[tr.Multiple[0]],
+                       state = nameof(Models.OpenAPI.Response.OPTKWFID.State),
                        constructionSupervision = nameof(Models.OpenAPI.Response.OPTKWFID.ConstructionSupervision),
                        investmentCaution = nameof(Models.OpenAPI.Response.OPTKWFID.InvestmentCaution),
                        listingDate = nameof(Models.OpenAPI.Response.OPTKWFID.ListingDate);
