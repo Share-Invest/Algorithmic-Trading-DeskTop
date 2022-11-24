@@ -26,6 +26,34 @@ public partial class AxKH : UserControl,
 
         InitializeComponent();
     }
+    public void GetCodeListByMarket()
+    {
+        var codeListByMarket = new List<string>(axAPI.GetCodeListByMarket("0")
+                                                     .Split(';')
+                                                     .OrderBy(o => Guid.NewGuid()));
+
+        codeListByMarket.AddRange(axAPI.GetCodeListByMarket("10")
+                                       .Split(';')
+                                       .OrderBy(o => Guid.NewGuid()));
+
+        foreach (var tr in Tr.OPTKWFID.GetListOfStocks(codeListByMarket))
+        {
+            var nCodeCount = tr.PrevNext;
+            tr.PrevNext = 0;
+
+            if (tr.Value is not null)
+                Delay.Instance.RequestTheMission(new Task(() =>
+                {
+                    OnReceiveErrorMessage(tr.RQName,
+                                          axAPI.CommKwRqData(tr.Value[0],
+                                                             tr.PrevNext,
+                                                             nCodeCount,
+                                                             0,
+                                                             tr.RQName,
+                                                             tr.ScreenNo));
+                }));
+        }
+    }
     public void CommRqData(Models.OpenAPI.TR tr)
     {
         var scrNo = tr.ScreenNo;
@@ -152,33 +180,5 @@ public partial class AxKH : UserControl,
             IsNotMock = string.IsNullOrEmpty(server) ||
                         int.TryParse(server, out int mock) && mock is not 1
         }));
-    }
-    void GetCodeListByMarket()
-    {
-        var codeListByMarket = new List<string>(axAPI.GetCodeListByMarket("0")
-                                                     .Split(';')
-                                                     .OrderBy(o => Guid.NewGuid()));
-
-        codeListByMarket.AddRange(axAPI.GetCodeListByMarket("10")
-                                       .Split(';')
-                                       .OrderBy(o => Guid.NewGuid()));
-
-        foreach (var tr in Tr.OPTKWFID.GetListOfStocks(codeListByMarket))
-        {
-            var nCodeCount = tr.PrevNext;
-            tr.PrevNext = 0;
-
-            if (tr.Value is not null)
-                Delay.Instance.RequestTheMission(new Task(() =>
-                {
-                    OnReceiveErrorMessage(tr.RQName,
-                                          axAPI.CommKwRqData(tr.Value[0],
-                                                             tr.PrevNext,
-                                                             nCodeCount,
-                                                             0,
-                                                             tr.RQName,
-                                                             tr.ScreenNo));
-                }));
-        }
     }
 }

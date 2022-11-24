@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 
 using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
+using ShareInvest.Mappers.Kiwoom;
 using ShareInvest.Models.OpenAPI;
 using ShareInvest.Observers;
 using ShareInvest.Observers.OpenAPI;
@@ -148,8 +149,25 @@ partial class Securities : Form
                 await socket.Hub.SendAsync(e.Type, e.Key, e.Data);
             }
             if (Resources.OPERATION.Equals(e.Type) &&
-                Real.GetOperation(e.Data.Split('\t')[0]) is Operation o)
+                MarketOperation.Get(e.Data.Split('\t')[0]) is EnumMarketOperation o)
             {
+                Delay.Instance.Milliseconds = o switch
+                {
+                    EnumMarketOperation.장시작 => 0xC9,
+
+                    EnumMarketOperation.장마감 => new Func<int>(() =>
+                    {
+#if DEBUG
+                        if (IsAdministrator)
+#endif
+                        {
+                            (securities as AxKH)?.GetCodeListByMarket();
+                        }
+                        return 0x259;
+                    })(),
+
+                    _ => 0x259
+                };
                 notifyIcon.Text = $"{DateTime.Now:G}\n{Enum.GetName(o)}";
             }
         }
@@ -229,14 +247,12 @@ partial class Securities : Form
 
             if (IsConnected)
             {
-                notifyIcon.Icon = icons[now.Second % 4];
-
-#if DEBUG
                 if (now.Hour == 8 && now.Minute == 1 && now.Second % 9 == 0 &&
                    (int)now.DayOfWeek > 0 && (int)now.DayOfWeek < 6)
-
+                {
                     (securities as Component)?.Dispose();
-#endif
+                }
+                notifyIcon.Icon = icons[now.Second % 4];
             }
             else
                 notifyIcon.Icon = icons[^1];
