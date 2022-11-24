@@ -1,6 +1,6 @@
 ﻿namespace ShareInvest;
 
-public enum Operation
+enum Operation
 {
     장시작전 = 0,
     장마감전_동시호가 = 2,
@@ -15,14 +15,14 @@ public enum Operation
     선옵_장마감전_동시호가_시작 = 's',
     선옵_장마감전_동시호가_종료 = 'e'
 }
-public static class Real
+static class Real
 {
-    public static Operation? GetOperation(string arg)
+    internal static Operation? GetOperation(string arg)
     {
         if (arg.Length == 1)
         {
-            var index = char.IsDigit(arg[0]) &&
-                        int.TryParse(arg, out int digit) ? digit : char.TryParse(arg, out char sub) ? sub : char.MinValue;
+            var index = char.IsDigit(arg[0]) ? Convert.ToInt32(arg) :
+                                               Convert.ToChar(arg);
 
             if (Enum.IsDefined(typeof(Operation), index))
             {
