@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithmic.Windows", "Algo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithmic.OpenAPI", "Algorithmic.OpenAPI\Algorithmic.OpenAPI.csproj", "{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithmic.Library", "..\Library.October.2022\Algorithmic.Library\Algorithmic.Library.csproj", "{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithmic.Library", "..\Algorithmic-Trading-Library\Algorithmic.Library\Algorithmic.Library.csproj", "{7EF45D5C-19EE-4DD3-9437-A31A0DCC5BD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAD87D36-FF48-4CF4-9A90-C2AC578D257F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AB515F65-524E-47EF-8DB2-A3C9E5D47C58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EF45D5C-19EE-4DD3-9437-A31A0DCC5BD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EF45D5C-19EE-4DD3-9437-A31A0DCC5BD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EF45D5C-19EE-4DD3-9437-A31A0DCC5BD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EF45D5C-19EE-4DD3-9437-A31A0DCC5BD5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
