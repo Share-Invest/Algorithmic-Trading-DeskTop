@@ -142,9 +142,7 @@ partial class Securities : Form
     {
         if (e is not null)
         {
-#if DEBUG
             if (IsAdministrator)
-#endif
             {
                 await socket.Hub.SendAsync(e.Type, e.Key, e.Data);
             }
@@ -158,9 +156,7 @@ partial class Securities : Form
 
                     Mappers.Kiwoom.EnumMarketOperation.장마감 => new Func<int>(() =>
                     {
-#if DEBUG
                         if (IsAdministrator)
-#endif
                         {
                             (securities as AxKH)?.GetCodeListByMarket();
                         }

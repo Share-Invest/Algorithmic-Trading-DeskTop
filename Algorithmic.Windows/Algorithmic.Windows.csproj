@@ -14,7 +14,7 @@
 		<Product>Algorithmic-Trading</Product>
 		<Copyright>Copyright ⓒ 2022, ShareInvest Corp.</Copyright>
 		<PlatformTarget>x86</PlatformTarget>
-		<Version>0.0.0.0</Version>
+		<Version>0.0.0.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
