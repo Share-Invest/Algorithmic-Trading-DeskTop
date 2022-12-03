@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
-using ShareInvest.Mappers.Kiwoom;
 using ShareInvest.Models.OpenAPI;
 using ShareInvest.Observers;
 using ShareInvest.Observers.OpenAPI;
@@ -61,7 +61,8 @@ partial class Securities : Form
             Lookup = now.Ticks,
             Key = key
         };
-        notifyIcon.Text = param.Length < 0x40 ? param : $"[{e?.Code}] {e?.Title}({e?.Screen})";
+        notifyIcon.Text = param.Length < 0x40 ? param :
+                                                $"[{e?.Code}] {e?.Title}({e?.Screen})";
 
         _ = await client.PostAsync(message.GetType().Name, message);
     }
@@ -142,24 +143,21 @@ partial class Securities : Form
     {
         if (e is not null)
         {
-#if DEBUG
             if (IsAdministrator)
-#endif
             {
                 await socket.Hub.SendAsync(e.Type, e.Key, e.Data);
             }
             if (Resources.OPERATION.Equals(e.Type) &&
-                MarketOperation.Get(e.Data.Split('\t')[0]) is EnumMarketOperation o)
+                Mappers.Kiwoom.MarketOperation.Get(e.Data.Split('\t')[0]) is
+                Mappers.Kiwoom.EnumMarketOperation o)
             {
                 Delay.Instance.Milliseconds = o switch
                 {
-                    EnumMarketOperation.장시작 => 0xC9,
+                    Mappers.Kiwoom.EnumMarketOperation.장시작 => 0xC9,
 
-                    EnumMarketOperation.장마감 => new Func<int>(() =>
+                    Mappers.Kiwoom.EnumMarketOperation.장마감 => new Func<int>(() =>
                     {
-#if DEBUG
                         if (IsAdministrator)
-#endif
                         {
                             (securities as AxKH)?.GetCodeListByMarket();
                         }
@@ -221,7 +219,18 @@ partial class Securities : Form
                     {
                         await Task.Delay(0x400);
                     }
-                IsAdministrator = Status.IsDebugging;
+                KiwoomUser? admin = null;
+
+                if (await client.GetAsync(nameof(KiwoomUser),
+                                          JToken.FromObject(new
+                                          {
+                                              key
+                                          }))
+                                              is string str)
+                {
+                    admin = JsonConvert.DeserializeObject<KiwoomUser>(str);
+                }
+                IsAdministrator = Status.IsDebugging || admin != null && admin.IsAdministrator;
 
                 var ax = securities as AxKH;
                 var storage = int.MinValue;
@@ -247,10 +256,11 @@ partial class Securities : Form
 
             if (IsConnected)
             {
-                if (now.Hour == 8 && now.Minute == 1 && now.Second % 9 == 0 &&
-                   (int)now.DayOfWeek > 0 && (int)now.DayOfWeek < 6)
+                if (IsAdministrator &&
+                    now.Hour == 8 && now.Minute == 1 && now.Second % 9 == 0 &&
+                    (int)now.DayOfWeek > 0 && (int)now.DayOfWeek < 6)
                 {
-                    (securities as Component)?.Dispose();
+                    Dispose(securities as Control);
                 }
                 notifyIcon.Icon = icons[now.Second % 4];
             }
@@ -259,7 +269,7 @@ partial class Securities : Form
 
             if (now.Second == 0x3A && now.Minute % 2 == 0 &&
                (now.Hour == 5 || now.Hour == 6 && now.Minute < 0x35) is false)
-
+            {
                 _ = BeginInvoke(new Action(() =>
                 {
                     try
@@ -283,6 +293,7 @@ partial class Securities : Form
                         Dispose(securities as AxKH);
                     }
                 }));
+            }
         }
     }
     void StripItemClicked(object? sender, ToolStripItemClickedEventArgs e)
