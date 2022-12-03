@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using ShareInvest.Infrastructure;
 using ShareInvest.Mappers;
@@ -218,7 +219,18 @@ partial class Securities : Form
                     {
                         await Task.Delay(0x400);
                     }
-                IsAdministrator = Status.IsDebugging;
+                KiwoomUser? admin = null;
+
+                if (await client.GetAsync(nameof(KiwoomUser),
+                                          JToken.FromObject(new
+                                          {
+                                              key
+                                          }))
+                                              is string str)
+                {
+                    admin = JsonConvert.DeserializeObject<KiwoomUser>(str);
+                }
+                IsAdministrator = Status.IsDebugging || admin != null && admin.IsAdministrator;
 
                 var ax = securities as AxKH;
                 var storage = int.MinValue;
