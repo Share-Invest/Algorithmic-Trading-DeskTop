@@ -8,7 +8,7 @@ jobs:
   build:
 
     env:
-      working-directory: ./Windows
+      working-directory: ./Algorithmic.Windows
       
     strategy:
       matrix:
